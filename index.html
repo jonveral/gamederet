@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Deret</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .button {
+            padding: 10px 20px;
+            margin: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .timer {
+            font-size: 1.3em;
+            margin: 10px 0;
+            color: #ff0000;
+        }
+        .level-list {
+            margin-top: 20px;
+        }
+        .level-list button {
+            margin: 5px;
+            padding: 5px 10px;
+            font-size: 0.9em;
+            cursor: pointer;
+        }
+        .level-list button.locked {
+            background-color: #ccc;
+            color: #666;
+            cursor: not-allowed;
+        }
+        .current-level {
+            font-size: 1.2em;
+            margin: 10px 0;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tebak Deret</h1>
+        <p class="current-level">Level Saat Ini: <span id="currentLevel">1</span></p>
+        <p>Tebak angka berikutnya dalam pola:</p>
+        <p id="pattern">1, 2, 4, 8, ?</p>
+        <p class="timer">Sisa waktu: <span id="timer">30</span> detik</p>
+        <input type="text" id="answer" placeholder="Masukkan jawaban...">
+        <button class="button" onclick="checkAnswer()">Submit</button>
+        <p id="result"></p>
+        <div class="level-list" id="levelList"></div>
+    </div>
+
+    <script>
+        const patterns = [
+            { pattern: [1, 2, 3, 4], answer: 5 }, // Pola aritmatika sederhana
+            { pattern: [2, 4, 8, 16], answer: 32 }, // Pola geometris sederhana
+            { pattern: [1, 1, 2, 3], answer: 5 }, // Fibonacci sederhana
+            { pattern: [2, 3, 5, 7], answer: 11 }, // Bilangan prima
+            { pattern: [1, 4, 9, 16], answer: 25 }, // Bilangan kuadrat
+            { pattern: [1, 2, 6, 24], answer: 120 }, // Faktorial
+            { pattern: [10, 20, 30, 40], answer: 50 }, // Penjumlahan tetap
+            { pattern: [81, 64, 49, 36], answer: 25 }, // Bilangan kuadrat menurun
+            { pattern: [3, 6, 12, 24], answer: 48 }, // Perkalian tetap
+            { pattern: [2, 10, 12, 20], answer: 22 }, // Kombinasi aritmatika
+            { pattern: [5, 10, 20, 40], answer: 80 }, // Perkalian sederhana
+            { pattern: [1, 3, 6, 10], answer: 15 }, // Segitiga Pascal
+            { pattern: [50, 40, 30, 20], answer: 10 }, // Pengurangan tetap
+            { pattern: [11, 22, 33, 44], answer: 55 }, // Penjumlahan unik
+            { pattern: [2, 6, 18, 54], answer: 162 }, // Perkalian rumit
+            { pattern: [100, 90, 81, 73], answer: 66 }, // Pola pengurangan dinamis
+            { pattern: [3, 9, 27, 81], answer: 243 }, // Pangkat tiga
+            { pattern: [5, 15, 35, 65], answer: 105 }, // Pola rumit kombinasi
+            { pattern: [1, 4, 7, 12], answer: 19 }, // Penjumlahan variabel
+            { pattern: [8, 16, 32, 64], answer: 128 }, // Perkalian eksponensial
+        ];
+
+        while (patterns.length < 50) {
+            const base = Math.floor(Math.random() * 10) + 1;
+            const multiplier = Math.floor(Math.random() * 5) + 2;
+            const series = Array.from({ length: 4 }, (_, i) => base * Math.pow(multiplier, i));
+            patterns.push({ pattern: series, answer: base * Math.pow(multiplier, 4) });
+        }
+
+        let currentPatternIndex = 0;
+        let unlockedLevels = 1;
+        let timer;
+        let timeLeft = 30;
+
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById("timer").textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    alert("Waktu habis! Coba lagi level ini.");
+                    loadPattern(currentPatternIndex);
+                }
+            }, 1000);
+        }
+
+        function loadPattern(index) {
+            clearInterval(timer);
+            currentPatternIndex = index;
+            const currentPattern = patterns[currentPatternIndex];
+            document.getElementById("pattern").textContent = currentPattern.pattern.join(", ") + ", ?";
+            document.getElementById("answer").value = "";
+            document.getElementById("result").textContent = "";
+            document.getElementById("currentLevel").textContent = currentPatternIndex + 1;
+            timeLeft = 30;
+            document.getElementById("timer").textContent = timeLeft;
+            startTimer();
+        }
+
+        function checkAnswer() {
+            const userAnswer = parseInt(document.getElementById("answer").value);
+            const correctAnswer = patterns[currentPatternIndex].answer;
+
+            if (userAnswer === correctAnswer) {
+                document.getElementById("result").textContent = "Benar!";
+                document.getElementById("result").style.color = "green";
+                if (currentPatternIndex + 1 > unlockedLevels) {
+                    unlockedLevels++;
+                }
+                updateLevelList();
+                if (currentPatternIndex < patterns.length - 1) {
+                    alert("Level selesai! Lanjut ke level berikutnya.");
+                    loadPattern(currentPatternIndex + 1);
+                } else {
+                    clearInterval(timer);
+                    alert("Selamat! Anda telah menyelesaikan semua level.");
+                }
+            } else {
+                document.getElementById("result").textContent = "Salah, coba lagi.";
+                document.getElementById("result").style.color = "red";
+            }
+        }
+
+        function updateLevelList() {
+            const levelList = document.getElementById("levelList");
+            levelList.innerHTML = "";
+            for (let i = 0; i < patterns.length; i++) {
+                const button = document.createElement("button");
+                button.textContent = `Level ${i + 1}`;
+                if (i < unlockedLevels) {
+                    button.onclick = () => loadPattern(i);
+                } else {
+                    button.classList.add("locked");
+                }
+                levelList.appendChild(button);
+            }
+        }
+
+        // Initialize game
+        window.onload = () => {
+            updateLevelList();
+            loadPattern(0);
+        };
+
+    </script>
+</body>
+</html>
